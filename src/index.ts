@@ -1,3 +1,18 @@
+require("dotenv").config({ path: "../.env" });
+
+if (!process.env.db) {
+  console.error("Please provide a MongoDB connection string in .env.");
+  process.exit();
+}
+
+import mongoose from "mongoose";
+mongoose
+  .connect(process.env.db, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .catch(console.error);
+
 import sh from "./db/car";
 
 import ms from "ms";
@@ -15,13 +30,18 @@ rl.question("What's your license plate?\n", async (l: string) => {
   rl.question("How long will you be parking for?\n", async (l: string) => {
     let time: string | number = ms(l);
 
+    const spinner = ora();
+    spinner.color = "green";
+
     if (!time) {
-      console.log("Please enter a valid time (m/d/h)");
+      console.log("Please enter a valid time (s/m/d/h)");
       process.exit();
     }
 
-    const spinner = ora("Succeeded! Loading...").start();
-    spinner.color = "green";
+    spinner.start("Succeeded! Loading...");
+
+    const alsoSpinner = ora();
+    alsoSpinner.color = "yellow";
 
     time = time.toString();
 
@@ -31,8 +51,18 @@ rl.question("What's your license plate?\n", async (l: string) => {
     });
 
     try {
-      await nd.save();
-      spinner.succeed("Successfully saved to the database!");
+      await nd.save().then(async (data) => {
+        spinner.succeed("Successfully saved to the database!");
+        const hRT: string = ms(Number(time), { long: true });
+        alsoSpinner.start(`You are currently parking for ${hRT}...`);
+        setTimeout(async () => {
+          await data.delete();
+          alsoSpinner.succeed("Thanks for your stay. Opening gates...");
+          process.exit();
+        }, Number(time) + 3000);
+        rl.close();
+        // process.exit();
+      });
     } catch (e) {
       // @ts-ignore
       spinner.fail(
