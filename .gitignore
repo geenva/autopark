@@ -1,0 +1,4 @@
+dist/
+**.js
+**.jsx
+**.js.map
