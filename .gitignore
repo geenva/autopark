@@ -1,4 +1,3 @@
 dist/
-**.js
-**.jsx
-**.js.map
+yarn.lock
+node_modules

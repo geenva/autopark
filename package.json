@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "mongoose": "^5.11.18"
+  },
+  "devDependencies": {}
+}
